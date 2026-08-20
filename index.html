@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuminaStudio - 3D Studio Lighting Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- 🌟 Core Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- 🌟 Scripts สำหรับทำระบบ F-Stop (Depth of Field / Bokeh) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/BokehShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/BokehPass.js"></script>
+</head>
+<body>
+    <button id="sidebarToggle" class="sidebar-toggle-btn">☰ เมนู</button>
+
+    <button id="themeToggleBtn" class="theme-toggle-btn" title="สลับโหมดมืด/สว่าง">
+        <span id="themeIcon">☀️</span>
+    </button>
+
+    <aside class="sidebar collapsed" id="sidebar">
+        <button id="sidebarClose" class="sidebar-close-btn">&times;</button>
+        <div class="sidebar-brand">
+            <h2>💡 LuminaStudio</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="menu-item active" data-target="section-simulator">
+                <span class="icon">🎛️</span> จัดไฟจำลอง (Simulator)
+            </li>
+            <li class="menu-item" data-target="section-about">
+                <span class="icon">ℹ️</span> เกี่ยวกับโปรแกรม
+            </li>
+        </ul>
+    </aside>
+
+    <main class="main-content-area expanded" id="mainArea">
+        <section id="section-simulator" class="content-section active">
+            <div class="simulator-header-bar">
+                <h1 class="simulator-logo">✨ LuminaStudio</h1>
+                <p class="simulator-subtitle">Interactive 3D Studio Lighting & Camera Simulator</p>
+            </div>
+
+            <!-- โครงสร้างเลย์เอาต์ 2 คอลัมน์ -->
+            <div class="main-wrapper layout-split">
+                
+                <!-- คอลัมน์ซ้าย: สตูดิโอ 2D, พรีวิว 3D (ตาเปล่า) และตั้งค่าไฟ -->
+                <div class="layout-left">
+                    <div class="container" style="height: 58vh; width: 100%;">
+                        <div class="studio-panel" id="studio">
+                            <div class="backdrop" id="backdrop2d"><div class="backdrop-roll"></div></div>
+                            <div class="subject" id="subject" style="top: 50%; left: 50%;"></div>
+                            <div class="camera" id="camera2d" style="top: 85%; left: 50%;"><div class="cam-body"><div class="cam-lens"></div></div></div>
+                            
+                            <div class="light" data-index="0" style="top: 60%; left: 20%;"><div class="light-body"></div><div class="softbox"></div><div class="softbox-front"></div><div class="light-label">Key</div></div>
+                            <div class="light" data-index="1" style="top: 60%; left: 80%;"><div class="light-body"></div><div class="softbox"></div><div class="softbox-front"></div><div class="light-label">Fill</div></div>
+                            <div class="light" data-index="2" style="top: 20%; left: 50%;"><div class="light-body"></div><div class="softbox"></div><div class="softbox-front"></div><div class="light-label">Rim</div></div>
+                            
+                            <div class="light rgb-light hidden" data-index="3" style="top: 30%; left: 85%;"><div class="tube-body"></div><div class="tube-front"></div><div class="light-label">RGB 1</div></div>
+                            <div class="light rgb-light hidden" data-index="4" style="top: 30%; left: 15%;"><div class="tube-body"></div><div class="tube-front"></div><div class="light-label">RGB 2</div></div>
+                            
+                            <!-- จุดไฟสตูดิโอตัวเสริม 2 ตัว -->
+                            <div class="light extra-light hidden" data-index="5" style="top: 80%; left: 25%;"><div class="light-body"></div><div class="softbox"></div><div class="softbox-front"></div><div class="light-label">Extra 1</div></div>
+                            <div class="light extra-light hidden" data-index="6" style="top: 80%; left: 75%;"><div class="light-body"></div><div class="softbox"></div><div class="softbox-front"></div><div class="light-label">Extra 2</div></div>
+                        </div>
+
+                        <!-- 3D Preview (ตาเปล่า) -->
+                        <div class="preview-panel" id="preview-panel"></div>
+                    </div>
+
+                    <!-- แผงควบคุมด้านล่าง (ส่วนซ้าย) -->
+                    <div class="controls-panel">
+                        <div class="control-card global-card" id="tour-scene">
+                            <h3><span class="icon">⚙️</span> ตั้งค่าฉาก & โมเดล</h3>
+                            <div class="control-row stacked">
+                                <label>เลือกโมเดล (Subject):</label>
+                                <select id="modelSelector" class="custom-select">
+                                    <option value="dog">🦊 สุนัข (Dog)</option>
+                                    <option value="cat">🐱 แมว (Cat)</option>
+                                    <option value="tree">🌳 ต้นไม้ (Tree)</option>
+                                    <option value="box" selected>📦 กล่องพัสดุ (Box)</option>
+                                    <option value="sphere">🔮 ทรงกลม (Sphere)</option>
+                                    <option value="car">🚗 รถยนต์จำลอง (Toy Car)</option>
+                                </select>
+                            </div>
+                            <div class="control-row stacked" style="margin-top: 5px;">
+                                <label>หมุนทิศทางตัวแบบ: <span id="val-subject-rot">0°</span></label>
+                                <input type="range" id="subjectRot" min="-180" max="180" step="1" value="0">
+                            </div>
+                            <div class="control-row inline"><label>สีฉากหลัง:</label><input type="color" id="bgColor" value="#6b6b6b"></div>
+                            <div class="control-row inline"><label>สีพื้นล่าง:</label><input type="color" id="floorColor" value="#404040"></div>
+                            <div class="control-row stacked" style="margin-top: 5px;">
+                                <label>ความสูงขากล้อง: <span id="val-cam-height">150 cm</span></label>
+                                <input type="range" id="camHeight" min="10" max="300" step="1" value="150">
+                            </div>
+
+                            <div id="tour-rgbbtn" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="addStudioBtn" class="btn-add-light" style="margin-top: 0; flex: 1;">➕ เพิ่มไฟสตูดิโอ</button>
+                                    <button id="removeStudioBtn" class="btn-remove-light hidden" style="margin-top: 0; flex: 1;">➖ ลบไฟสตูดิโอ</button>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="addRgbBtn" class="btn-add-light" style="margin-top: 0; flex: 1;">➕ เพิ่มไฟ RGB</button>
+                                    <button id="removeRgbBtn" class="btn-remove-light hidden" style="margin-top: 0; flex: 1;">➖ ลบไฟ RGB</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-card global-card" id="tour-presets">
+                            <h3><span class="icon">✨</span> รูปแบบจัดไฟ (Presets)</h3>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">คลิกเพื่อเลือกรูปแบบการจัดไฟสตูดิโอระดับโปรทันที</p>
+                            
+                            <div class="preset-categories">
+                                <div class="preset-category">
+                                    <h4>👤 Portrait พื้นฐาน</h4>
+                                    <div class="preset-buttons-grid">
+                                        <button class="btn-preset active-preset" data-preset="three_point">3-Point Lighting</button>
+                                        <button class="btn-preset" data-preset="rembrandt">Rembrandt</button>
+                                        <button class="btn-preset" data-preset="butterfly">Butterfly</button>
+                                        <button class="btn-preset" data-preset="split">Split Light</button>
+                                        <button class="btn-preset" data-preset="loop">Loop Light</button>
+                                    </div>
+                                </div>
+                                <div class="preset-category">
+                                    <h4>🎬 Commercial & Pro</h4>
+                                    <div class="preset-buttons-grid">
+                                        <button class="btn-preset" data-preset="clamshell">Clamshell</button>
+                                        <button class="btn-preset" data-preset="product">Product Flat</button>
+                                        <button class="btn-preset" data-preset="silhouette">Silhouette</button>
+                                        <button class="btn-preset" data-preset="interview">Interview</button>
+                                    </div>
+                                </div>
+                                <div class="preset-category">
+                                    <h4>🌈 Creative / RGB</h4>
+                                    <div class="preset-buttons-grid">
+                                        <button class="btn-preset" data-preset="cyberpunk">Cyberpunk</button>
+                                        <button class="btn-preset" data-preset="neon_wash">Neon Wash</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="preset-desc" style="font-size: 11px; color: var(--text-muted); margin-top: 15px; min-height: 35px; line-height: 1.4; padding: 10px; background: var(--bg-element); border-radius: 8px; border-left: 3px solid var(--accent-btn);">
+                                💡 3-Point Lighting: มาตรฐานการจัดไฟ 3 จุด (Key, Fill, Rim) พื้นฐานสำหรับงานถ่ายภาพและวิดีโอ
+                            </div>
+                        </div>
+
+                        <div class="control-card global-card light-control-box" id="tour-light" style="flex: 2 1 340px; max-width: 450px;">
+                            <h3><span class="icon">💡</span> แผงควบคุมไฟสตูดิโอ</h3>
+                            
+                            <div class="light-tabs-bar">
+                                <button class="light-tab-btn active" data-light-tab="0">Key</button>
+                                <button class="light-tab-btn" data-light-tab="1">Fill</button>
+                                <button class="light-tab-btn" data-light-tab="2">Rim</button>
+                                <button class="light-tab-btn extra-tab-item hidden" data-light-tab="5">Extra 1</button>
+                                <button class="light-tab-btn extra-tab-item hidden" data-light-tab="6">Extra 2</button>
+                                <button class="light-tab-btn rgb-tab-item hidden" data-light-tab="3">RGB 1</button>
+                                <button class="light-tab-btn rgb-tab-item hidden" data-light-tab="4">RGB 2</button>
+                            </div>
+
+                            <div class="light-panel-body" style="margin-top: 15px;">
+                                <div class="control-card light-card active-light-card" data-index="0" style="max-width: 100%; border: none; padding: 0; box-shadow: none; background: transparent;">
+                                    <div class="control-row inline"><label>เปิด/ปิดไฟ</label><label class="switch"><input type="checkbox" class="toggle-power" checked><span class="slider round"></span></label></div>
+                                    <div class="control-row inline"><label>ระยะห่างถึงแบบ:</label><span class="val-distance" style="color: var(--accent-btn); font-weight: bold;">0.00 m</span></div>
+                                    <div class="control-row inline"><label>ตัวกรองแสง:</label><select class="modifier-select custom-select short"><option value="softbox" selected>Softbox (ฟุ้ง)</option><option value="snoot">Snoot (จุดแคบ)</option></select></div>
+                                    <div class="control-row stacked"><label>กำลังไฟ: <span class="val-intensity">80%</span></label><input type="range" class="intensity-slider" min="0" max="100" step="1" value="80"></div>
+                                    <div class="control-row stacked"><label>ค่าสีไฟ: <span class="val-kelvin">5500K</span></label><input type="range" class="kelvin-slider" min="2500" max="7500" step="50" value="5500"></div>
+                                    <div class="control-row stacked"><label>ความสูง: <span class="val-height">180 cm</span></label><input type="range" class="height-slider" min="50" max="350" step="1" value="180"></div>
+                                </div>
+
+                                <div class="control-card light-card" data-index="1" style="max-width: 100%; border: none; padding: 0; box-shadow: none; background: transparent; display: none;">
+                                    <div class="control-row inline"><label>เปิด/ปิดไฟ</label><label class="switch"><input type="checkbox" class="toggle-power" checked><span class="slider round"></span></label></div>
+                                    <div class="control-row inline"><label>ระยะห่างถึงแบบ:</label><span class="val-distance" style="color: var(--accent-btn); font-weight: bold;">0.00 m</span></div>
+                                    <div class="control-row inline"><label>ตัวกรองแสง:</label><select class="modifier-select custom-select short"><option value="softbox" selected>Softbox (ฟุ้ง)</option><option value="snoot">Snoot (จุดแคบ)</option></select></div>
+                                    <div class="control-row stacked"><label>กำลังไฟ: <span class="val-intensity">30%</span></label><input type="range" class="intensity-slider" min="0" max="100" step="1" value="30"></div>
+                                    <div class="control-row stacked"><label>ค่าสีไฟ: <span class="val-kelvin">5500K</span></label><input type="range" class="kelvin-slider" min="2500" max="7500" step="50" value="5500"></div>
+                                    <div class="control-row stacked"><label>ความสูง: <span class="val-height">150 cm</span></label><input type="range" class="height-slider" min="50" max="350" step="1" value="150"></div>
+                                </div>
+
+                                <div class="control-card light-card" data-index="2" style="max-width: 100%; border: none; padding: 0; box-shadow: none; background: transparent; display: none;">
+                                    <div class="control-row inline"><label>เปิด/ปิดไฟ</label><label class="switch"><input type="checkbox" class="toggle-power" checked><span class="slider round"></span></label></div>
+                                    <div class="control-row inline"><label>ระยะห่างถึงแบบ:</label><span class="val-distance" style="color: var(--accent-btn); font-weight: bold;">0.00 m</span></div>
+                                    <div class="control-row inline"><label>ตัวกรองแสง:</label><select class="modifier-select custom-select short"><option value="softbox" selected>Softbox (ฟุ้ง)</option><option value="snoot">Snoot (จุดแคบ)</option></select></div>
+                                    <div class="control-row stacked"><label>กำลังไฟ: <span class="val-intensity">60%</span></label><input type="range" class="intensity-slider" min="0" max="100" step="1" value="60"></div>
+                                    <div class="control-row stacked"><label>ค่าสีไฟ: <span class="val-kelvin">4000K</span></label><input type="range" class="kelvin-slider" min="2500" max="7500" step="50" value="4000"></div>
+                                    <div class="control-row stacked"><label>ความสูง: <span class="val-height">200 cm</span></label><input type="range" class="height-slider" min="50" max="350" step="1" value="200"></div>
+                                </div>
+
+                                <div class="control-card light-card" data-index="3" id="card-rgb1" style="max-width: 100%; border: none; padding: 0; box-shadow: none; background: transparent; display: none;">
+                                    <div class="control-row inline"><label>เปิด/ปิดไฟ</label><label class="switch"><input type="checkbox" class="toggle-power" checked><span class="slider round"></span></label></div>
+                                    <div class="control-row inline"><label>ระยะห่างถึงแบบ:</label><span class="val-distance" style="color: var(--accent-btn); font-weight: bold;">0.00 m</span></div>
+                                    <div class="control-row inline"><label>ตัวกรองแสง:</label><select class="modifier-select custom-select short"><option value="softbox" selected>Softbox (ฟุ้ง)</option><option value="snoot">Snoot (จุดแคบ)</option></select></div>
+                                    <div class="control-row stacked"><label>กำลังไฟ: <span class="val-intensity">50%</span></label><input type="range" class="intensity-slider" min="0" max="100" step="1" value="50"></div>
+                                    <div class="control-row inline"><label>เลือกสี (RGB):</label><input type="color" class="rgb-picker" value="#ff0055"></div>
+                                    <div class="control-row stacked"><label>ความสูง: <span class="val-height">100 cm</span></label><input type="range" class="height-slider" min="50" max="350" step="1" value="100"></div>
+                                </div>
+
+                                <div class="control-card light-card" data-index="4" id="card-rgb2" style="max-width: 100%; border: none; padding: 0; box-shadow: none; background: transparent; display: none;">
+                                    <div class="control-row inline"><label>เปิด/ปิดไฟ</label><label class="switch"><input type="checkbox" class="toggle-power" checked><span class="slider round"></span></label></div>
+                                    <div class="control-row inline"><label>ระยะห่างถึงแบบ:</label><span class="val-distance" style="color: var(--accent-btn); font-weight: bold;">0.00 m</span></div>
+                                    <div class="control-row inline"><label>ตัวกรองแสง:</label><select class="modifier-select custom-select short"><option value="softbox" selected>Softbox (ฟุ้ง)</option><option value="snoot">Snoot (จุดแคบ)</option></select></div>
+                                    <div class="control-row stacked"><label>กำลังไฟ: <span class="val-intensity">50%</span></label><input type="range" class="intensity-slider" min="0" max="100" step="1" value="50"></div>
+                                    <div class="control-row inline"><label>เลือกสี (RGB):</label><input type="color" class="rgb-picker" value="#0088ff"></div>
+                                    <div class="control-row stacked"><label>ความสูง: <span class="val-height">100 cm</span></label><input type="range" class="height-slider" min="50" max="350" step="1" value="100"></div>
+                                </div>
+
+                                <div class="control-card light-card" data-index="5" id="card-extra1" style="max-width: 100%; border: none; padding: 0; box-shadow: none; background: transparent; display: none;">
+                                    <div class="control-row inline"><label>เปิด/ปิดไฟ</label><label class="switch"><input type="checkbox" class="toggle-power" checked><span class="slider round"></span></label></div>
+                                    <div class="control-row inline"><label>ระยะห่างถึงแบบ:</label><span class="val-distance" style="color: var(--accent-btn); font-weight: bold;">0.00 m</span></div>
+                                    <div class="control-row inline"><label>ตัวกรองแสง:</label><select class="modifier-select custom-select short"><option value="softbox" selected>Softbox (ฟุ้ง)</option><option value="snoot">Snoot (จุดแคบ)</option></select></div>
+                                    <div class="control-row stacked"><label>กำลังไฟ: <span class="val-intensity">80%</span></label><input type="range" class="intensity-slider" min="0" max="100" step="1" value="80"></div>
+                                    <div class="control-row stacked"><label>ค่าสีไฟ: <span class="val-kelvin">5500K</span></label><input type="range" class="kelvin-slider" min="2500" max="7500" step="50" value="5500"></div>
+                                    <div class="control-row stacked"><label>ความสูง: <span class="val-height">180 cm</span></label><input type="range" class="height-slider" min="50" max="350" step="1" value="180"></div>
+                                </div>
+
+                                <div class="control-card light-card" data-index="6" id="card-extra2" style="max-width: 100%; border: none; padding: 0; box-shadow: none; background: transparent; display: none;">
+                                    <div class="control-row inline"><label>เปิด/ปิดไฟ</label><label class="switch"><input type="checkbox" class="toggle-power" checked><span class="slider round"></span></label></div>
+                                    <div class="control-row inline"><label>ระยะห่างถึงแบบ:</label><span class="val-distance" style="color: var(--accent-btn); font-weight: bold;">0.00 m</span></div>
+                                    <div class="control-row inline"><label>ตัวกรองแสง:</label><select class="modifier-select custom-select short"><option value="softbox" selected>Softbox (ฟุ้ง)</option><option value="snoot">Snoot (จุดแคบ)</option></select></div>
+                                    <div class="control-row stacked"><label>กำลังไฟ: <span class="val-intensity">80%</span></label><input type="range" class="intensity-slider" min="0" max="100" step="1" value="80"></div>
+                                    <div class="control-row stacked"><label>ค่าสีไฟ: <span class="val-kelvin">5500K</span></label><input type="range" class="kelvin-slider" min="2500" max="7500" step="50" value="5500"></div>
+                                    <div class="control-row stacked"><label>ความสูง: <span class="val-height">180 cm</span></label><input type="range" class="height-slider" min="50" max="350" step="1" value="180"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- คอลัมน์ขวา: ภาพจากกล้อง 3D แท้ๆ & แผงตั้งค่ากล้อง -->
+                <div class="layout-right">
+                    <!-- หน้าจอกล้อง 3D -->
+                    <div class="real-camera-panel" style="height: 58vh;">
+                        <div id="wb-overlay-right" class="wb-overlay"></div>
+                        <div id="flash-effect-right" class="flash-effect"></div>
+                        <div id="noise-overlay-right" class="noise-overlay"></div>
+                        <div id="camera-preview-panel" style="width: 100%; height: 100%; border-radius: 16px; overflow: hidden;"></div>
+                    </div>
+
+                    <!-- ตั้งค่ากล้อง (Camera) -->
+                    <div class="control-card global-card" id="tour-camera" style="max-width: 100%; border-top: 4px solid var(--accent-btn);">
+                        <h3 style="margin-bottom: 15px;"><span class="icon">📷</span> การตั้งค่ากล้อง (ช่องมองภาพ)</h3>
+                        
+                        <div class="control-row inline">
+                            <label>โหมด (Mode):</label>
+                            <select id="camMode" class="custom-select short">
+                                <option value="M" selected>M (Manual)</option>
+                                <option value="P">P (Program Auto)</option>
+                                <option value="Av">Av (Aperture Pri.)</option>
+                                <option value="Tv">Tv (Shutter Pri.)</option>
+                            </select>
+                        </div>
+                        <div class="control-row inline">
+                            <label>F-Stop (ความเบลอฉากหลัง):</label>
+                            <select id="camF" class="custom-select short">
+                                <option value="1.2">f/1.2</option><option value="1.4">f/1.4</option>
+                                <option value="1.8">f/1.8</option><option value="2.0">f/2.0</option>
+                                <option value="2.8">f/2.8</option><option value="4.0">f/4.0</option>
+                                <option value="5.6" selected>f/5.6</option><option value="8.0">f/8.0</option>
+                                <option value="11">f/11</option><option value="16">f/16</option><option value="22">f/22</option>
+                            </select>
+                        </div>
+                        <div class="control-row inline">
+                            <label>Shutter:</label>
+                            <select id="camSS" class="custom-select short">
+                                <option value="15">1/15</option><option value="30">1/30</option>
+                                <option value="60">1/60</option><option value="125" selected>1/125</option>
+                                <option value="250">250</option><option value="500">1/500</option>
+                                <option value="1000">1/1000</option><option value="2000">1/2000</option>
+                                <option value="4000">1/4000</option><option value="8000">1/8000</option>
+                            </select>
+                        </div>
+                        <div class="control-row inline">
+                            <label>ISO (สัญญาณรบกวน):</label>
+                            <select id="camISO" class="custom-select short">
+                                <option value="50">50</option><option value="100">100</option>
+                                <option value="200">200</option><option value="400" selected>400</option>
+                                <option value="800">800</option><option value="1600">1600</option>
+                                <option value="3200">3200</option><option value="6400">6400</option>
+                                <option value="12800">12800</option><option value="25600">25600</option>
+                            </select>
+                        </div>
+                        <div class="control-row stacked" style="margin-top: 10px;">
+                            <label>ระยะเลนส์: <span id="val-cam-focal">50 mm</span></label>
+                            <input type="range" id="camFocal" min="18" max="200" step="1" value="50">
+                        </div>
+                        <div class="control-row stacked">
+                            <label>WB (White Balance): <span id="val-cam-wb">5500K</span></label>
+                            <input type="range" id="camWB" min="2500" max="10000" step="100" value="5500">
+                        </div>
+                        <button id="btnCapture" class="btn-capture">📸 กดถ่ายภาพ 3D</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 🌟 หน้าเกี่ยวกับโปรแกรม ผสานเนื้อหาเด่นจากงานวิจัยพร้อมจุดเด่น 3-4 จุดและฟีเจอร์มีอะไรบ้าง -->
+        <section id="section-about" class="content-section">
+            <div class="info-card developer-card-container" style="max-width: 1000px; padding: 45px;">
+                <div class="about-header-glow"></div>
+                
+                <div style="text-align: center; margin-bottom: 35px;">
+                    <span style="font-size: 48px;">💡</span>
+                    <h2 style="font-size: 28px; color: var(--text-heading); margin-top: 10px;">เกี่ยวกับโปรแกรม LuminaStudio</h2>
+                    <p style="font-size: 14px; color: var(--text-muted); max-width: 750px; margin: 10px auto 0 auto; line-height: 1.7;">
+                        ระบบจำลองการจัดแสงสตูดิโอ 3 มิติ และการตั้งค่ากล้องเสมือนจริง พัฒนาขึ้นเพื่อส่งเสริมทักษะปฏิบัติการถ่ายภาพ เรื่อง การจัดแสงสตูดิโอ สำหรับนักเรียนชั้นมัธยมศึกษาปีที่ 4 ตามแนวคิดทฤษฎีคอนสตรัคติวิสต์ (Constructivism) เพื่อแก้ปัญหาข้อจำกัดด้านเวลาเรียนและยกระดับผลสัมฤทธิ์ทางการเรียนรู้อย่างเป็นรูปธรรม
+                    </p>
+                </div>
+
+                <!-- 🌟 จุดเด่นของเว็บไซต์ (3-4 จุดสั้น ๆ) -->
+                <div style="margin-bottom: 35px;">
+                    <h3 style="color: var(--text-heading); font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                        <span>⭐</span> จุดเด่นของเว็บไซต์
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+                        <div style="background: var(--bg-element); border: 1px solid var(--border-color); padding: 18px; border-radius: 10px;">
+                            <h4 style="color: var(--text-heading); font-size: 15px; margin-bottom: 6px;">🧠 คอนสตรัคติวิสต์</h4>
+                            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">ส่งเสริมให้ผู้เรียนได้ลงมือปฏิบัติและสร้างองค์ความรู้ด้วยตนเอง</p>
+                        </div>
+                        <div style="background: var(--bg-element); border: 1px solid var(--border-color); padding: 18px; border-radius: 10px;">
+                            <h4 style="color: var(--text-heading); font-size: 15px; margin-bottom: 6px;">⏱️ ยืดหยุ่นเวลาเรียน</h4>
+                            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">แก้ปัญหาข้อจำกัดเวลาเรียนไม่ต่อเนื่อง ทบทวนเนื้อหาได้ทุกเวลา</p>
+                        </div>
+                        <div style="background: var(--bg-element); border: 1px solid var(--border-color); padding: 18px; border-radius: 10px;">
+                            <h4 style="color: var(--text-heading); font-size: 15px; margin-bottom: 6px;">🎛️ จำลอง 3 มิติสมจริง</h4>
+                            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">ควบคุมแสงเงาและอุปกรณ์สตูดิโอแบบ Real-time ตามหลักฟิสิกส์</p>
+                        </div>
+                        <div style="background: var(--bg-element); border: 1px solid var(--border-color); padding: 18px; border-radius: 10px;">
+                            <h4 style="color: var(--text-heading); font-size: 15px; margin-bottom: 6px;">📐 ส่งออก Lighting Recipe</h4>
+                            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">บันทึกภาพถ่ายและแผนผังการจัดไฟเป็นอินโฟกราฟิกพร้อมส่งงาน</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🌟 ภายในเว็บไซต์มีอะไรบ้าง (ฟีเจอร์ทั้งหมดพร้อมอิโมจิ) -->
+                <div style="margin-bottom: 35px;">
+                    <h3 style="color: var(--text-heading); font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                        <span>🛠️</span> ภายในเว็บไซต์มีอะไรบ้าง (ฟีเจอร์หลัก)
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="background: var(--bg-element); border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 10px; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 20px;">🎛️</span> <div><strong>Interactive 3D Studio Simulator:</strong> พื้นที่จัดไฟจำลอง 3 มิติ รองรับการเพิ่ม ลด และลากเปลี่ยนตำแหน่งดวงไฟหลัก (Key, Fill, Rim) ไฟ RGB และไฟเสริม Extra ได้อย่างอิสระ</div>
+                        </div>
+                        <div style="background: var(--bg-element); border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 10px; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 20px;">📷</span> <div><strong>Exposure & Optics Physics Engine:</strong> ระบบจำลองพฤติกรรมกล้องจริง ทั้ง Exposure Triangle (F-Stop, Shutter Speed, ISO), ระยะชัดลึก Bokeh Depth of Field และ White Balance</div>
+                        </div>
+                        <div style="background: var(--bg-element); border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 10px; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 20px;">✨</span> <div><strong>Professional Lighting Presets:</strong> รวมรูปแบบการจัดไฟยอดนิยมทั้ง Portrait, Commercial และ Creative/RGB (เช่น Rembrandt, Butterfly, Split, Clamshell, Cyberpunk) พร้อมโหลดค่าอัตโนมัติ</div>
+                        </div>
+                        <div style="background: var(--bg-element); border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 10px; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 20px;">🦊</span> <div><strong>Interactive 3D Subjects:</strong> ตัวแบบจำลองหลากหลายรูปแบบ เช่น สุนัข, แมว, กล่องพัสดุ, ทรงกลม และรถยนต์จำลอง เพื่อฝึกฝนการจัดแสงกับวัตถุที่แตกต่างกัน</div>
+                        </div>
+                        <div style="background: var(--bg-element); border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 10px; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 20px;">📸</span> <div><strong>Lighting Recipe Infographic Generator:</strong> ระบบถ่ายภาพ 3 มิติพร้อมสร้างภาพอินโฟกราฟิกสรุปภาพถ่าย แผนผังการวางไฟ และค่าการตั้งค่ากล้องทั้งหมดในภาพเดียวเพื่อนำไปส่งงาน</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- กล่องข้อมูลผู้พัฒนา -->
+                <div class="dev-profile-box" style="margin-top: 0;">
+                    <div class="dev-badge-icon">👨‍💻</div>
+                    <div class="dev-info-content">
+                        <h3>ผู้พัฒนาโปรแกรม (Developer)</h3>
+                        <p class="dev-name"><strong>นายศุภชัย นิธิสกุลกาญจน์</strong></p>
+                        <p class="dev-uni">🏫 นิสิตสาขาวิชาเอกเทคโนโลยีการศึกษาและคอมพิวเตอร์ศึกษา มหาวิทยาลัยศรีนครินทรวิโรฒ</p>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">พัฒนาขึ้นเพื่อใช้ในการศึกษาวิจัยร่วมกับนักเรียนชั้นมัธยมศึกษาปีที่ 4 โรงเรียนสาธิตมหาวิทยาลัยศรีนครินทรวิโรฒ ปทุมวัน</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="captureModal" class="modal">
+        <div class="modal-content wide-modal" style="max-width: 850px; padding: 25px;">
+            <span class="close-modal">&times;</span>
+            <h3 style="margin-bottom: 15px; color: var(--text-heading); font-size: 18px;">📸 สรุปผลการจัดไฟ & ภาพถ่าย (Lighting Recipe)</h3>
+            
+            <div style="max-height: 65vh; overflow-y: auto; margin-bottom: 15px; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-main); padding: 15px; text-align: center;">
+                <img id="capturedImage" src="" alt="Captured Image" style="max-width: 100%; height: auto; display: inline-block; border-radius: 8px;">
+            </div>
+            <a id="downloadPhotoBtn" class="btn-capture" style="display: block; text-decoration: none; text-align: center; max-width: 350px; margin: 0 auto; padding: 12px; font-size: 14px;">📥 ดาวน์โหลดรูปภาพสรุปการตั้งค่า</a>
+        </div>
+    </div>
+
+    <!-- 🌟 Welcome Modal ต้อนรับตอนเข้าเว็บครั้งแรก -->
+    <div id="welcome-modal" class="modal show">
+        <div class="modal-content" style="max-width: 480px; padding: 35px; border-top: 5px solid var(--accent-btn); text-align: left;">
+            <div style="font-size: 40px; margin-bottom: 10px; text-align: center;">✨</div>
+            <h2 style="color: var(--text-heading); font-size: 22px; margin-bottom: 8px; font-weight: 600; text-align: center;">ยินดีต้อนรับสู่ LuminaStudio</h2>
+            <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin-bottom: 20px; text-align: center;">
+                กรุณากรอกชื่อเล่นของคุณ เพื่อบันทึกเวลาเข้าสู่ระบบการทดลอง
+            </p>
+            
+            <div class="control-row stacked" style="margin-bottom: 20px;">
+                <label style="color: var(--text-heading); font-weight: 600;">ชื่อเล่นของคุณ:</label>
+                <input type="text" id="userNicknameInput" placeholder="เช่น น้องเพชร" class="custom-select" style="padding: 12px; font-size: 15px;">
+            </div>
+
+            <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin-bottom: 20px;">
+                คุณต้องการให้ระบบช่วยแนะนำขั้นตอนการใช้งานเบื้องต้น (Guided Tour) หรือไม่?
+            </p>
+
+            <div style="display: flex; gap: 12px;">
+                <button id="btn-start-tour" class="btn-tour-primary" style="flex: 1; padding: 12px; font-size: 14px; cursor: pointer;">🚀 เริ่มต้นเรียนรู้</button>
+                <button id="btn-skip-tour" class="btn-tour-secondary" style="flex: 1; padding: 12px; font-size: 14px; cursor: pointer;">เข้าสู่โปรแกรมปกติ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌟 แผงคู่มือยาวตลอดความสูงทางขวามือ (ซ่อนไว้โดยค่าเริ่มต้น) -->
+    <div id="tour-sidebar" class="tour-right-sidebar" style="display: none;">
+        <div class="tour-header">
+            <h3>📖 คู่มือการใช้งานโปรแกรม</h3>
+            <button id="tour-close-sidebar" class="tour-close-btn">&times;</button>
+        </div>
+        <p class="tour-subtitle">ทำภารกิจด้านล่างนี้ตามลำดับเพื่อเรียนรู้การใช้งาน:</p>
+        <ul id="tour-steps-list" class="tour-checklist">
+            <!-- รายการสเต็ปสร้างอัตโนมัติ -->
+        </ul>
+        <button id="btn-skip-all-tour" class="btn-tour-secondary" style="width: 100%; margin-top: auto;">ปิดคำแนะนำทั้งหมด</button>
+    </div>
+
+    <button id="btn-help" class="btn-help">❓ คู่มือการใช้งาน</button>
+    <script src="script.js"></script>
+</body>
+</html>
