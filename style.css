@@ -84,7 +84,7 @@ body {
 
 .main-content-area {
     margin-left: 260px; flex: 1; padding: 25px; box-sizing: border-box; overflow-y: auto;
-    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .main-content-area.expanded { margin-left: 0; }
 
@@ -249,216 +249,27 @@ input:checked + .slider.round:before { transform: translateX(22px); background-c
 .dev-profile-box { display: flex; align-items: center; gap: 20px; margin-top: 25px; padding: 20px; background: var(--bg-element); border-radius: 12px; border: 1px solid var(--border-color); }
 .dev-badge-icon { font-size: 38px; width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: 50%; border: 2px solid var(--border-color); }
 
-.accordion-container { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; }
-.accordion-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }
-.accordion-header { width: 100%; background: var(--bg-element); border: none; padding: 18px 22px; text-align: left; font-family: 'Prompt'; font-size: 15px; font-weight: 600; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.accordion-header.active { background: var(--accent-btn); color: var(--accent-btn-text); }
-.accordion-body { max-height: 0; overflow: hidden; padding: 0 22px; background: var(--bg-card-inner); transition: max-height 0.5s ease, padding 0.4s ease; color: var(--text-muted); }
-.accordion-item.open .accordion-body { max-height: 2000px; padding: 22px; }
-
 .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.75); backdrop-filter: blur(8px); justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; }
 .modal.show { display: flex; opacity: 1; }
 .modal-content.wide-modal { max-width: 1000px; width: 95%; }
 .modal-content { background-color: var(--bg-card); padding: 30px; border-radius: 16px; position: relative; text-align: center; border: 1px solid var(--border-color); }
 .close-modal { color: var(--text-muted); position: absolute; right: 20px; top: 18px; font-size: 28px; font-weight: bold; cursor: pointer; }
 
-.tour-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 17, 23, 0.4); z-index: 999; display: none; pointer-events: none; }
-.tour-dialog { position: fixed; background: var(--bg-card); color: var(--text-heading); padding: 25px 30px; border-radius: 16px; width: 90%; max-width: 420px; z-index: 1001; display: none; box-shadow: 0 15px 45px rgba(0,0,0,0.35); border-top: 5px solid var(--accent-btn); border: 1px solid var(--border-color); cursor: move; pointer-events: auto; }
-.tour-pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.tour-pos-right { top: 25%; right: 5%; transform: none; }
-.tour-pos-left { top: 25%; left: 5%; transform: none; }
-.tour-pos-top { top: 6%; left: 50%; transform: translateX(-50%); }
-.tour-dialog h3 { color: var(--text-heading); margin-bottom: 12px; font-size: 20px; font-weight: 600; }
-.tour-dialog p { font-size: 15px; color: var(--text-muted); margin-bottom: 25px; }
-.tour-buttons { display: flex; justify-content: space-between; align-items: center; }
-.btn-tour-primary { background: var(--accent-btn); color: var(--accent-btn-text); border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: 'Prompt'; font-weight: 600; }
-.btn-tour-secondary { background: var(--bg-element); color: var(--text-main); border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-family: 'Prompt'; font-weight: 500; }
-.tour-progress { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 15px; font-weight: 500; }
-
 .highlight-tour { position: relative !important; z-index: 1000 !important; background-color: var(--bg-card) !important; box-shadow: 0 0 0 6px var(--accent-btn), 0 0 50px rgba(88, 166, 255, 0.6) !important; border-radius: 16px; filter: brightness(1.3) !important; transition: all 0.3s ease; }
-.highlight-tour.mission-success { box-shadow: 0 0 0 6px #3fb950, 0 0 50px rgba(63, 185, 80, 0.7) !important; }
-
 .btn-help { position: fixed; bottom: 25px; right: 25px; background: var(--accent-btn); color: var(--accent-btn-text); border: none; padding: 12px 22px; border-radius: 30px; font-family: 'Prompt'; font-size: 14px; font-weight: 600; cursor: pointer; z-index: 900; }
-.glossary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 10px; }
-.glossary-item { background: var(--bg-element); border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; text-align: center; }
-.content-tech-box { background: var(--bg-element); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; }
-.quiz-option-btn { width: 100%; padding: 12px 15px; background: var(--bg-element); color: var(--text-heading); border: 1px solid var(--border-color); border-radius: 8px; text-align: left; font-family: 'Prompt'; font-size: 14px; cursor: pointer; margin-bottom: 5px; }
-.quiz-option-btn.correct { background: #238636 !important; border-color: #2ea043 !important; color: #fff !important; }
-.quiz-option-btn.wrong { background: #da3633 !important; border-color: #f85149 !important; color: #fff !important; }
 
 .noise-overlay {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
     background-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
-    opacity: 0; 
-    mix-blend-mode: overlay; 
-    z-index: 3;
-    transition: opacity 0.3s ease;
+    opacity: 0; mix-blend-mode: overlay; z-index: 3; transition: opacity 0.3s ease;
 }
 
-/* 🌟 สไตล์แผงคู่มือ Checklist ทางซ้ายมือ */
-.tour-left-sidebar {
-    position: fixed;
-    top: 80px;
-    left: 20px;
-    width: 320px;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 20px;
-    z-index: 950;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    font-family: 'Prompt', sans-serif;
-    transition: all 0.3s ease;
-}
-.tour-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-bottom: 8px;
-}
-.tour-header h3 {
-    font-size: 16px;
-    color: var(--text-heading);
-    font-weight: 600;
-}
-.tour-close-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 22px;
-    cursor: pointer;
-}
-.tour-close-btn:hover { color: var(--text-heading); }
-.tour-subtitle {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-}
-.tour-checklist {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.tour-checklist li {
-    padding: 10px 12px;
-    background: var(--bg-element);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 13px;
-    color: var(--text-muted);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.tour-checklist li.active-step {
-    background: var(--bg-card-inner);
-    border-color: var(--accent-btn);
-    color: var(--text-heading);
-    box-shadow: 0 0 10px var(--primary-glow);
-    font-weight: 500;
-}
-.tour-checklist li.completed-step {
-    background: rgba(63, 185, 80, 0.1);
-    border-color: #3fb950;
-    color: #3fb950;
-}
-
-/* 🌟 สไตล์แผงคู่มือยาวตลอดหน้าจอทางขวามือ */
+/* 🌟 แผงคู่มือ: ดันหน้าจอหลักไปทางซ้ายบน PC และย่อลงล่างบน iPad */
 .tour-right-sidebar {
     position: fixed;
     top: 0;
     right: 0;
-    width: 380px;
-    height: 100vh;
-    background-color: var(--bg-card);
-    border-left: 1px solid var(--border-color);
-    padding: 30px 24px;
-    z-index: 950;
-    box-shadow: -10px 0 35px rgba(0,0,0,0.4);
-    font-family: 'Prompt', sans-serif;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    animation: slideInRight 0.3s ease;
-}
-@keyframes slideInRight {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
-}
-.tour-right-sidebar .tour-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 12px;
-    margin-bottom: 12px;
-}
-.tour-right-sidebar .tour-header h3 {
-    font-size: 18px;
-    color: var(--text-heading);
-    font-weight: 600;
-}
-.tour-close-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 26px;
-    cursor: pointer;
-}
-.tour-close-btn:hover { color: var(--text-heading); }
-.tour-subtitle {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 20px;
-}
-.tour-checklist {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
-    flex: 1;
-    padding-right: 4px;
-}
-.tour-checklist li {
-    padding: 14px 16px;
-    background: var(--bg-element);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    font-size: 14px;
-    color: var(--text-muted);
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.tour-checklist li.active-step {
-    background: var(--bg-card-inner);
-    border-color: var(--accent-btn);
-    color: var(--text-heading);
-    box-shadow: 0 0 15px var(--primary-glow);
-    font-weight: 500;
-    border-left: 5px solid var(--accent-btn);
-}
-.tour-checklist li.completed-step {
-    background: rgba(63, 185, 80, 0.1);
-    border-color: #3fb950;
-    color: #3fb950;
-    border-left: 5px solid #3fb950;
-}
-
-/* 🌟 สไตล์แผงคู่มือขนาดใหญ่ ยาวตลอดหน้าจอทางขวามือ */
-.tour-right-sidebar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 440px;
+    width: 420px;
     height: 100vh;
     background-color: var(--bg-card);
     border-left: 2px solid var(--border-color);
@@ -469,76 +280,42 @@ input:checked + .slider.round:before { transform: translateX(22px); background-c
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    animation: slideInRight 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-@keyframes slideInRight {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+
+@media (min-width: 1025px) {
+    body.tour-open .main-content-area {
+        margin-right: 420px !important;
+        transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 }
-.tour-right-sidebar .tour-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 15px;
-    margin-bottom: 15px;
+
+@media (max-width: 1024px) {
+    .tour-right-sidebar {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 75vh;
+        top: auto !important;
+        bottom: 0;
+        right: 0;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    }
+    body.tour-open .main-content-area {
+        margin-right: 0 !important;
+    }
 }
-.tour-right-sidebar .tour-header h3 {
-    font-size: 20px;
-    color: var(--text-heading);
-    font-weight: 600;
+
+.tour-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;
 }
-.tour-close-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 30px;
-    cursor: pointer;
-    line-height: 1;
-}
+.tour-header h3 { font-size: 20px; color: var(--text-heading); font-weight: 600; }
+.tour-close-btn { background: transparent; border: none; color: var(--text-muted); font-size: 30px; cursor: pointer; line-height: 1; }
 .tour-close-btn:hover { color: var(--text-heading); }
-.tour-subtitle {
-    font-size: 14px;
-    color: var(--text-muted);
-    margin-bottom: 20px;
-}
-.tour-checklist {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    overflow-y: auto;
-    flex: 1;
-    padding-right: 6px;
-}
-.tour-checklist li {
-    padding: 16px 18px;
-    background: var(--bg-element);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    font-size: 14px;
-    color: var(--text-muted);
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-/* 🌟 ขยายขนาด (Scale-up) และเน้นหัวข้อที่กำลังทำอยู่ */
-.tour-checklist li.active-step {
-    background: var(--bg-card-inner);
-    border-color: var(--accent-btn);
-    color: var(--text-heading);
-    box-shadow: 0 0 25px var(--primary-glow);
-    font-weight: 600;
-    font-size: 16px;
-    transform: scale(1.03);
-    border-left: 6px solid var(--accent-btn);
-    padding: 20px 22px;
-}
-.tour-checklist li.completed-step {
-    background: rgba(63, 185, 80, 0.1);
-    border-color: #3fb950;
-    color: #3fb950;
-    border-left: 6px solid #3fb950;
-    transform: scale(1);
-}
+.tour-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+.tour-checklist { list-style: none; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1; padding-right: 6px; }
+.tour-checklist li { padding: 16px 18px; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 12px; font-size: 14px; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px; }
+.tour-checklist li.active-step { background: var(--bg-card-inner); border-color: var(--accent-btn); color: var(--text-heading); box-shadow: 0 0 25px var(--primary-glow); font-weight: 600; font-size: 16px; transform: scale(1.03); border-left: 6px solid var(--accent-btn); padding: 20px 22px; }
+.tour-checklist li.completed-step { background: rgba(63, 185, 80, 0.1); border-color: #3fb950; color: #3fb950; border-left: 6px solid #3fb950; }
+.btn-tour-secondary { background: var(--bg-element); color: var(--text-main); border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-family: 'Prompt'; font-weight: 500; }

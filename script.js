@@ -521,20 +521,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (label) label.style.transform = `rotate(${-(angle + offsetAngle)}deg)`;
     }
 
-    // 🌟 ปรับปรุงระบบลากวางให้รองรับทั้ง Mouse (PC) และ Touch (iPad/Mobile) อย่างสมบูรณ์ 100%
+    // 🌟 ระบบลากวางรองรับทั้ง Mouse และ Touch (iPad)
     function makeDraggable(element, onDragCallback, isClickToggle = false, toggleCallback = null) {
         let isDragging = false, hasMoved = false;
         let animationFrameId = null; 
         
-        const startDrag = (e) => {
-            isDragging = true;
-            hasMoved = false;
-        };
-
+        const startDrag = () => { isDragging = true; hasMoved = false; };
         const moveDrag = (clientX, clientY) => {
             if (!isDragging) return;
             hasMoved = true;
-            
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             
             animationFrameId = requestAnimationFrame(() => {
@@ -547,7 +542,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 requestRenderIfNotRequested();
             });
         };
-
         const endDrag = () => {
             if (isDragging) {
                 isDragging = false;
@@ -555,23 +549,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // Desktop Events
         element.addEventListener('mousedown', startDrag);
         document.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
         document.addEventListener('mouseup', endDrag);
 
-        // iPad / Touch Events (ป้องกันหน้าจอเลื่อนเวลาลากวัตถุด้วย touch-action: none)
         element.style.touchAction = 'none';
-        element.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                startDrag();
-            }
-        });
+        element.addEventListener('touchstart', (e) => { if (e.touches.length === 1) startDrag(); });
         document.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
-            if (e.touches.length === 1) {
-                moveDrag(e.touches[0].clientX, e.touches[0].clientY);
-            }
+            if (e.touches.length === 1) moveDrag(e.touches[0].clientX, e.touches[0].clientY);
         }, { passive: false });
         document.addEventListener('touchend', endDrag);
     }
@@ -1479,6 +1465,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resizeObserver.observe(previewPanel);
     resizeObserver.observe(cameraPreviewPanel);
 
+    // 🌟 ระบบคู่มือ (ดันหน้าจอหลักไปทางซ้ายเมื่อเปิดบน PC)
     const tourSidebar = document.getElementById('tour-sidebar');
     const stepsListEl = document.getElementById('tour-steps-list');
     const btnSkipAll = document.getElementById('btn-skip-all-tour');
@@ -1527,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.highlight-tour').forEach(el => el.classList.remove('highlight-tour'));
 
         if (currentTourIdx >= tourSteps.length) {
-            if(tourSidebar) tourSidebar.style.display = 'none';
+            closeTour();
             return;
         }
 
@@ -1548,22 +1535,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function openTour() {
+        if(tourSidebar) {
+            tourSidebar.style.display = 'flex';
+            document.body.classList.add('tour-open'); // ดันหน้าจอหลักไปซ้ายบน PC
+            currentTourIdx = 0;
+            runTourStep();
+        }
+    }
+
     function closeTour() {
-        if(tourSidebar) tourSidebar.style.display = 'none';
-        document.querySelectorAll('.highlight-tour').forEach(el => el.classList.remove('highlight-tour'));
+        if(tourSidebar) {
+            tourSidebar.style.display = 'none';
+            document.body.classList.remove('tour-open'); // คืนค่าหน้าจอหลัก
+            document.querySelectorAll('.highlight-tour').forEach(el => el.classList.remove('highlight-tour'));
+        }
     }
 
     if (btnSkipAll) btnSkipAll.addEventListener('click', closeTour);
     if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeTour);
     
     if (btnHelp) {
-        btnHelp.addEventListener('click', () => {
-            if(tourSidebar) {
-                tourSidebar.style.display = 'flex';
-                currentTourIdx = 0;
-                runTourStep();
-            }
-        });
+        btnHelp.addEventListener('click', () => { openTour(); });
     }
 
     const welcomeModal = document.getElementById('welcome-modal');
@@ -1581,11 +1574,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             sendActivityData("checkin", nickname);
             if(welcomeModal) welcomeModal.classList.remove('show');
-            if(tourSidebar) {
-                tourSidebar.style.display = 'flex';
-                currentTourIdx = 0;
-                runTourStep();
-            }
+            openTour();
         });
     }
 

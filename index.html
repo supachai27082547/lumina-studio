@@ -360,7 +360,7 @@
         </div>
     </div>
 
-    <!-- 🌟 Welcome Modal -->
+    <!-- 🌟 Welcome Modal (ปรับปุ่มเริ่มต้นเรียนรู้ให้ใหญ่และเป็นสีเขียวเด่นชัด) -->
     <div id="welcome-modal" class="modal show">
         <div class="modal-content" style="max-width: 480px; padding: 35px; border-top: 5px solid var(--accent-btn); text-align: left;">
             <div style="font-size: 40px; margin-bottom: 10px; text-align: center;">✨</div>
@@ -369,14 +369,14 @@
                 กรุณากรอกชื่อเล่นของคุณ เพื่อบันทึกเวลาเข้าสู่ระบบการทดลอง
             </p>
             
-            <div class="control-row stacked" style="margin-bottom: 20px;">
+            <div class="control-row stacked" style="margin-bottom: 25px;">
                 <label style="color: var(--text-heading); font-weight: 600;">ชื่อเล่นของคุณ:</label>
                 <input type="text" id="userNicknameInput" placeholder="เช่น น้องเพชร" class="custom-select" style="padding: 12px; font-size: 15px;">
             </div>
 
-            <div style="display: flex; gap: 12px;">
-                <button id="btn-start-tour" class="btn-tour-primary" style="flex: 1; padding: 12px; font-size: 14px; cursor: pointer;">🚀 เริ่มต้นเรียนรู้</button>
-                <button id="btn-skip-tour" class="btn-tour-secondary" style="flex: 1; padding: 12px; font-size: 14px; cursor: pointer;">เข้าสู่โปรแกรมปกติ</button>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button id="btn-start-tour" class="btn-tour-primary-large" style="width: 100%; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #2ea043, #238636); color: #ffffff; border: none; border-radius: 10px; box-shadow: 0 6px 20px rgba(46, 160, 67, 0.4); transition: all 0.3s ease;">🚀 เริ่มต้นเรียนรู้</button>
+                <button id="btn-skip-tour" class="btn-tour-secondary" style="width: 100%; padding: 12px; font-size: 14px; cursor: pointer;">เข้าสู่โปรแกรมปกติ</button>
             </div>
         </div>
     </div>
