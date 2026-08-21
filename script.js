@@ -1,14 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 🌟 Web App URL ของ Google Apps Script ของคุณเพชร
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP2tSFXzqooASgXiht5tMMUfMKhyoWXf-JxxAjSrtoG8-CpXKS1JQrsDLm6q-lo8DxmQ/exec";
 
-    // ฟังก์ชันส่งข้อมูลไปยัง Google Apps Script
-    function sendActivityData(actionType, nickname = "") {
-        const payload = {
-            action: actionType,
-            nickname: nickname
-        };
+    let sessionId = localStorage.getItem("lumina_session_id");
+    if (!sessionId) {
+        sessionId = "user_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
+        localStorage.setItem("lumina_session_id", sessionId);
+    }
 
+    function sendActivityData(actionType, nickname = "") {
+        const payload = { action: actionType, nickname: nickname, sessionId: sessionId };
         fetch(SCRIPT_URL, {
             method: "POST",
             mode: "no-cors",
@@ -89,24 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     card.style.display = 'none';
                 }
             });
-        });
-    });
-
-    const accordionHeaders = document.querySelectorAll('.accordion-header');
-    accordionHeaders.forEach(header => {
-        header.addEventListener('click', () => {
-            const item = header.parentElement;
-            const isOpen = item.classList.contains('open');
-            
-            document.querySelectorAll('.accordion-item').forEach(acc => {
-                acc.classList.remove('open');
-                acc.querySelector('.accordion-header').classList.remove('active');
-            });
-
-            if (!isOpen) {
-                item.classList.add('open');
-                header.classList.add('active');
-            }
         });
     });
 
@@ -539,12 +521,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (label) label.style.transform = `rotate(${-(angle + offsetAngle)}deg)`;
     }
 
+    // 🌟 ปรับปรุงระบบลากวางให้รองรับทั้ง Mouse (PC) และ Touch (iPad/Mobile) อย่างสมบูรณ์ 100%
     function makeDraggable(element, onDragCallback, isClickToggle = false, toggleCallback = null) {
         let isDragging = false, hasMoved = false;
         let animationFrameId = null; 
         
-        element.addEventListener('mousedown', () => { isDragging = true; hasMoved = false; });
-        document.addEventListener('mousemove', (e) => {
+        const startDrag = (e) => {
+            isDragging = true;
+            hasMoved = false;
+        };
+
+        const moveDrag = (clientX, clientY) => {
             if (!isDragging) return;
             hasMoved = true;
             
@@ -552,20 +539,41 @@ document.addEventListener('DOMContentLoaded', () => {
             
             animationFrameId = requestAnimationFrame(() => {
                 const sRect = studioPanel.getBoundingClientRect();
-                let newX = Math.max(0, Math.min(e.clientX - sRect.left, sRect.width));
-                let newY = Math.max(0, Math.min(e.clientY - sRect.top, sRect.height));
+                let newX = Math.max(0, Math.min(clientX - sRect.left, sRect.width));
+                let newY = Math.max(0, Math.min(clientY - sRect.top, sRect.height));
                 element.style.left = `${(newX / sRect.width) * 100}%`;
                 element.style.top = `${(newY / sRect.height) * 100}%`;
                 if (onDragCallback) onDragCallback(newX / sRect.width, newY / sRect.height);
                 requestRenderIfNotRequested();
             });
-        });
-        document.addEventListener('mouseup', () => {
+        };
+
+        const endDrag = () => {
             if (isDragging) {
                 isDragging = false;
                 if (!hasMoved && isClickToggle && toggleCallback) toggleCallback();
             }
+        };
+
+        // Desktop Events
+        element.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+        document.addEventListener('mouseup', endDrag);
+
+        // iPad / Touch Events (ป้องกันหน้าจอเลื่อนเวลาลากวัตถุด้วย touch-action: none)
+        element.style.touchAction = 'none';
+        element.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                startDrag();
+            }
         });
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            if (e.touches.length === 1) {
+                moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
+        document.addEventListener('touchend', endDrag);
     }
 
     makeDraggable(subject2DUI, (pctX, pctY) => {
@@ -1388,12 +1396,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadPhotoBtn = document.getElementById('downloadPhotoBtn');
     const closeModal = document.querySelector('.close-modal');
 
-    // 🌟 ผูกการกดปุ่ม btnCapture ให้ทำการอัปเดตเวลาออก (Check-out) ทันที
     btnCapture.addEventListener('click', () => {
         const nicknameInput = document.getElementById('userNicknameInput');
         const nickname = nicknameInput && nicknameInput.value.trim() ? nicknameInput.value.trim() : "นักเรียน";
         
-        // ส่งคำสั่งอัปเดตเวลาออกไปที่ Google Apps Script โดยใช้ชื่อเล่นเดิมเพื่อทับค่าล่าสุด
         sendActivityData("update_checkout", nickname);
 
         if(flashEffectRight) {
@@ -1473,7 +1479,6 @@ document.addEventListener('DOMContentLoaded', () => {
     resizeObserver.observe(previewPanel);
     resizeObserver.observe(cameraPreviewPanel);
 
-    // 🌟 ระบบ Checklist ขวาสุด (7 ขั้นตอน)
     const tourSidebar = document.getElementById('tour-sidebar');
     const stepsListEl = document.getElementById('tour-steps-list');
     const btnSkipAll = document.getElementById('btn-skip-all-tour');
@@ -1561,7 +1566,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🌟 ควบคุมการแสดงผล Welcome Modal ตอนเข้าเว็บครั้งแรก
     const welcomeModal = document.getElementById('welcome-modal');
     const btnStartTour = document.getElementById('btn-start-tour');
     const btnSkipTour = document.getElementById('btn-skip-tour');
@@ -1598,7 +1602,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // โหลดค่าเริ่มต้นเป็นพรีเซ็ต 3-Point Lighting ทันทีที่เข้าเว็บ
     const defaultPresetBtn = document.querySelector('.btn-preset[data-preset="three_point"]');
     if (defaultPresetBtn) {
         defaultPresetBtn.click();
